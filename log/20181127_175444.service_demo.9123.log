@@ -1,0 +1,25 @@
+[INFO] (10756) (MainThread) Listen...
+[INFO] (10756) (MainThread) 2018-11-27 17:57:01
+[ERROR] (10756) (MainThread) Uncaught exception POST /service_demo (127.0.0.1)
+HTTPServerRequest(protocol='http', host='127.0.0.1:9123', method='POST', uri='/service_demo', version='HTTP/1.1', remote_ip='127.0.0.1')
+Traceback (most recent call last):
+  File "D:\Anaconda3\lib\site-packages\tornado\web.py", line 1590, in _execute
+    result = method(*self.path_args, **self.path_kwargs)
+  File "D:/GithubProjects/facenet_face_regonistant/sever3.py", line 68, in post
+    self.write(json.dumps(self.recog()))
+  File "D:/GithubProjects/facenet_face_regonistant/sever3.py", line 33, in recog
+    image_base64 = params["image_base64"]
+TypeError: string indices must be integers
+[ERROR] (10756) (MainThread) 500 POST /service_demo (127.0.0.1) 59.14ms
+[INFO] (10756) (MainThread) 2018-11-27 18:03:21
+[ERROR] (10756) (MainThread) Uncaught exception POST /service_demo (127.0.0.1)
+HTTPServerRequest(protocol='http', host='127.0.0.1:9123', method='POST', uri='/service_demo', version='HTTP/1.1', remote_ip='127.0.0.1')
+Traceback (most recent call last):
+  File "D:\Anaconda3\lib\site-packages\tornado\web.py", line 1590, in _execute
+    result = method(*self.path_args, **self.path_kwargs)
+  File "D:/GithubProjects/facenet_face_regonistant/sever3.py", line 68, in post
+    self.write(json.dumps(self.recog()))
+  File "D:/GithubProjects/facenet_face_regonistant/sever3.py", line 33, in recog
+    image_base64 = params["image_base64"]
+TypeError: string indices must be integers
+[ERROR] (10756) (MainThread) 500 POST /service_demo (127.0.0.1) 6.01ms
