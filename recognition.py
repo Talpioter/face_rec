@@ -5,70 +5,17 @@ import src.facenet
 import src.align.detect_face
 import numpy as np
 from scipy import misc
-import face_mysql
 import os
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2' # 防止CPU出问题
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  # 防止CPU出问题
 
 
 class face_reconition:
     def __init__(self):
         pass
 
-    def prewhiten(self, x):
-        mean = np.mean(x)
-        std = np.std(x)
-        std_adj = np.maximum(std, 1.0 / np.sqrt(x.size))
-        y = np.multiply(np.subtract(x, mean), 1 / std_adj)
-        return y
-
-
-    #  根据路径获取该文件夹中所有的图片
-    def get_image_paths(self, inpath):
-        paths = []
-        for file in os.listdir(inpath):
-            if os.path.isfile(os.path.join(inpath, file)):
-                if file.lower().endswith(('.png', '.jpg', '.jpeg', 'tiff', 'TIFF')) is False:
-                    continue
-                paths.append(os.path.join(inpath, file))
-        return (paths)
-
-
-    # 将一个文件夹下的所有图片转化为json
-    def images_to_vectors(self, images):
-        modelpath = 'D://GithubProjects//facenet_facerecognition//models//20180402-114759'
-        with tf.Graph().as_default():
-            with tf.Session() as sess:
-                src.facenet.load_model(modelpath)
-                # Get input and output tensors
-                images_placeholder = tf.get_default_graph().get_tensor_by_name("input:0")
-                embeddings = tf.get_default_graph().get_tensor_by_name("embeddings:0")
-                phase_train_placeholder = tf.get_default_graph().get_tensor_by_name("phase_train:0")
-
-
-                # 获取图片中的人脸数
-                #img = misc.imread(os.path.expanduser(image_path), mode='RGB')
-                face_rec_results = self.image_array_align_data(images)
-                return face_rec_results
-
-                    # 判断是否检测出人脸 检测不出 就跳出此循环
-                    # if images.shape[0] == 1 : continue
-                    # feed_dict = {images_placeholder: images, phase_train_placeholder: False}
-                    #
-                    # emb_array = sess.run(embeddings, feed_dict=feed_dict)
-                    #
-                    # filename_base, file_extension = os.path.splitext(image_path)
-                    # for j in range(0, len(emb_array)):
-                    #     results[filename_base + "_" + str(j)] = emb_array[j].tolist()
-                    #     face_mysql_instant = face_mysql.face_mysql()
-                    #     face_mysql_instant.insert_facejson(filename_base + "_" + str(j),
-                    #                                        ",".join(str(li) for li in emb_array[j].tolist()))
-
-        # All done, save for later!
-        # json.dump(results, open(outjson_path, "w"))
-        # 返回图像中所有人脸的向量
-
-    def image_array_align_data(self, image_arr, image_path, image_size=160, margin=32, gpu_memory_fraction=1.0,
+    def image_array_align_data(image_arr, image_size=160, margin=32, gpu_memory_fraction=1.0,
                                detect_multiple_faces=True):
+
         minsize = 20  # minimum size of face
         threshold = [0.6, 0.7, 0.7]  # three steps's threshold
         factor = 0.709  # scale factor
@@ -80,13 +27,13 @@ class face_reconition:
             with sess.as_default():
                 pnet, rnet, onet = src.align.detect_face.create_mtcnn(sess, None)
 
-        img = image_arr
+        # 一定要把颜色通道标明，否则bounding_boxes会报 'str' object has no attribute 'shape' 错误
+        img = misc.imread(image_arr, mode='RGB')
         bounding_boxes, _ = src.align.detect_face.detect_face(img, minsize, pnet, rnet, onet, threshold, factor)
         nrof_faces = bounding_boxes.shape[0]
 
         print("检测的人脸个数为：{}".format(nrof_faces))
 
-        nrof_successfully_aligned = 0
         if nrof_faces > 0:
             det = bounding_boxes[:, 0:4]
             det_arr = []
@@ -108,7 +55,6 @@ class face_reconition:
             else:
                 det_arr.append(np.squeeze(det))
 
-            images = np.zeros((nrof_faces, image_size, image_size, 3))
             facedic = {}
             facedic['count'] = nrof_faces
             for i, det in enumerate(det_arr):
@@ -123,46 +69,9 @@ class face_reconition:
                 facedic['face%s_' % i + 'upperLeft_Y'] = str(bb[0])
                 facedic['face%s_' % i + 'lowRight_X'] = str(bb[3])
                 facedic['face%s_' % i + 'lowRight_Y'] = str(bb[2])
-                cropped = img[bb[1]:bb[3], bb[0]:bb[2], :]
 
                 print("bb0=" + str(bb[0]), "bb1=" + str(bb[1]), "bb2=" + str(bb[2]), "bb3=" + str(bb[3]))
 
         faceresult = json.dumps(facedic)
         print(faceresult)
         return faceresult
-
-
-
-
-        # # 进行图片缩放 cv2.resize(img,(w,h))
-                # scaled = misc.imresize(cropped, (image_size, image_size), interp='bilinear')
-                # nrof_successfully_aligned += 1
-                #
-                # # print(scaled)
-                # # scaled=self.prewhiten(scaled)
-                # # 保存检测的头像
-                # filename_base = './img/'  # 保存截取出来的头像
-                # filename = os.path.basename(image_path)
-                # filename_name, file_extension = os.path.splitext(filename)
-                # output_filename_n = "{}/{}_{}{}".format(filename_base, filename_name, i, file_extension) # 给截取的图像命名
-                # misc.imsave(output_filename_n, scaled)
-                #
-                # scaled = src.facenet.prewhiten(scaled)
-                # scaled = src.facenet.crop(scaled, False, 160)
-                # scaled = src.facenet.flip(scaled, False)
-
-                # images[i] = scaled
-        # if nrof_faces > 0:
-        #     return images
-        # else:
-        #     # 如果没有检测到人脸  直接返回一个1*3的0矩阵  多少维度都行  只要能和是不是一个图片辨别出来就行
-        #     return np.zeros((1, 3))
-
-
-if __name__ == "__main__":
-    face_reconition = face_reconition()
-    images_path = './img/img'
-    # 模型地址
-    modelpath = 'D://GithubProjects//facenet_facerecognition//models//20180402-114759'
-    out_path = './img/pic.json'
-    face_reconition.images_to_vectors(images_path, out_path, modelpath)

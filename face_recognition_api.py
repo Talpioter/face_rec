@@ -2,20 +2,16 @@
 from flask import Flask, jsonify, abort, make_response, request, url_for
 from flask_httpauth import HTTPBasicAuth
 import json
-
 import os
 import ntpath
 import argparse
-
 import face_mysql
 import tensorflow as tf
-
 import src.facenet
 import src.align.detect_face
 import numpy as np
 from scipy import misc
 import matrix_fun
-
 import urllib
 
 app = Flask(__name__)
@@ -155,10 +151,10 @@ with tf.Graph().as_default():
             if pic_min_scores[i]<MAX_DISTINCT:
                 rdict = {'uid': pic_min_uid[i],
                          'distance': pic_min_scores[i],
-                         'pic_name': pic_min_names[i] }
+                         'pic_name': pic_min_names[i]}
                 result.append(rdict)
         print(result)
-        if len(result)==0 :
+        if len(result)==0:
             return json.dumps({"state":"success, but not match face"})
         else:
             return json.dumps(result)

@@ -87,7 +87,7 @@ class face_reconition:
         bounding_boxes, _ = src.align.detect_face.detect_face(img, minsize, pnet, rnet, onet, threshold, factor)
         nrof_faces = bounding_boxes.shape[0]
 
-        print("检测的人脸个数为：{}".format(nrof_faces))
+        print("检测到的人脸个数为：{}".format(nrof_faces))
 
         nrof_successfully_aligned = 0
         if nrof_faces > 0:

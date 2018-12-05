@@ -218,7 +218,7 @@ class Network(object):
 
 class PNet(Network):
     def setup(self):
-        (self.feed('data') #pylint: disable=no-value-for-parameter, no-member
+        (self.feed('data')  # pylint: disable=no-value-for-parameter, no-member
              .conv(3, 3, 10, 1, 1, padding='VALID', relu=False, name='conv1')
              .prelu(name='PReLU1')
              .max_pool(2, 2, 2, 2, name='pool1')
@@ -229,13 +229,13 @@ class PNet(Network):
              .conv(1, 1, 2, 1, 1, relu=False, name='conv4-1')
              .softmax(3,name='prob1'))
 
-        (self.feed('PReLU3') #pylint: disable=no-value-for-parameter
+        (self.feed('PReLU3')  # pylint: disable=no-value-for-parameter
              .conv(1, 1, 4, 1, 1, relu=False, name='conv4-2'))
 
 
 class RNet(Network):
     def setup(self):
-        (self.feed('data') #pylint: disable=no-value-for-parameter, no-member
+        (self.feed('data')  # pylint: disable=no-value-for-parameter, no-member
              .conv(3, 3, 28, 1, 1, padding='VALID', relu=False, name='conv1')
              .prelu(name='prelu1')
              .max_pool(3, 3, 2, 2, name='pool1')
@@ -249,13 +249,13 @@ class RNet(Network):
              .fc(2, relu=False, name='conv5-1')
              .softmax(1,name='prob1'))
 
-        (self.feed('prelu4') #pylint: disable=no-value-for-parameter
+        (self.feed('prelu4')  # pylint: disable=no-value-for-parameter
              .fc(4, relu=False, name='conv5-2'))
 
 
 class ONet(Network):
     def setup(self):
-        (self.feed('data') #pylint: disable=no-value-for-parameter, no-member
+        (self.feed('data')  # pylint: disable=no-value-for-parameter, no-member
              .conv(3, 3, 32, 1, 1, padding='VALID', relu=False, name='conv1')
              .prelu(name='prelu1')
              .max_pool(3, 3, 2, 2, name='pool1')
@@ -272,11 +272,12 @@ class ONet(Network):
              .fc(2, relu=False, name='conv6-1')
              .softmax(1, name='prob1'))
 
-        (self.feed('prelu5') #pylint: disable=no-value-for-parameter
+        (self.feed('prelu5')  # pylint: disable=no-value-for-parameter
              .fc(4, relu=False, name='conv6-2'))
 
-        (self.feed('prelu5') #pylint: disable=no-value-for-parameter
+        (self.feed('prelu5')  # pylint: disable=no-value-for-parameter
              .fc(10, relu=False, name='conv6-3'))
+
 
 def create_mtcnn(sess, model_path):
     if not model_path:
@@ -295,9 +296,9 @@ def create_mtcnn(sess, model_path):
         onet = ONet({'data':data})
         onet.load(os.path.join(model_path, 'det3.npy'), sess)
         
-    pnet_fun = lambda img : sess.run(('pnet/conv4-2/BiasAdd:0', 'pnet/prob1:0'), feed_dict={'pnet/input:0':img})
-    rnet_fun = lambda img : sess.run(('rnet/conv5-2/conv5-2:0', 'rnet/prob1:0'), feed_dict={'rnet/input:0':img})
-    onet_fun = lambda img : sess.run(('onet/conv6-2/conv6-2:0', 'onet/conv6-3/conv6-3:0', 'onet/prob1:0'), feed_dict={'onet/input:0':img})
+    pnet_fun = lambda img: sess.run(('pnet/conv4-2/BiasAdd:0', 'pnet/prob1:0'), feed_dict={'pnet/input:0':img})
+    rnet_fun = lambda img: sess.run(('rnet/conv5-2/conv5-2:0', 'rnet/prob1:0'), feed_dict={'rnet/input:0':img})
+    onet_fun = lambda img: sess.run(('onet/conv6-2/conv6-2:0', 'onet/conv6-3/conv6-3:0', 'onet/prob1:0'), feed_dict={'onet/input:0': img})
     return pnet_fun, rnet_fun, onet_fun
 
 
@@ -307,26 +308,27 @@ def detect_face(img, minsize, pnet, rnet, onet, threshold, factor):
     # pnet, rnet, onet: caffemodel
     # threshold: threshold=[th1 th2 th3], th1-3 are three steps's threshold
     # fastresize: resize img from last scale (using in high-resolution images) if fastresize==true
-    factor_count=0
-    total_boxes=np.empty((0,9))
-    points=np.empty(0)
-    h=img.shape[0]
-    w=img.shape[1]
-    minl=np.amin([h, w])
-    m=12.0/minsize
-    minl=minl*m
+    factor_count = 0
+    total_boxes = np.empty((0,9))
+    points = np.empty(0)
+    h = img.shape[0]  # 垂直像素
+    w = img.shape[1]  # 水平像素
+                      # image.shape[2], 图片通道数
+    minl = np.amin([h, w])
+    m = 12.0/minsize
+    minl = minl*m
     # creat scale pyramid
-    scales=[]
-    while minl>=12:
+    scales = []
+    while minl >= 12:
         scales += [m*np.power(factor, factor_count)]
         minl = minl*factor
         factor_count += 1
 
     # first stage
     for j in range(len(scales)):
-        scale=scales[j]
-        hs=int(np.ceil(h*scale))
-        ws=int(np.ceil(w*scale))
+        scale = scales[j]
+        hs = int(np.ceil(h*scale))
+        ws = int(np.ceil(w*scale))
         im_data = imresample(img, (hs, ws))
         im_data = (im_data-127.5)*0.0078125
         img_x = np.expand_dims(im_data, 0)
@@ -347,12 +349,12 @@ def detect_face(img, minsize, pnet, rnet, onet, threshold, factor):
     if numbox>0:
         pick = nms(total_boxes.copy(), 0.7, 'Union')
         total_boxes = total_boxes[pick,:]
-        regw = total_boxes[:,2]-total_boxes[:,0]
-        regh = total_boxes[:,3]-total_boxes[:,1]
-        qq1 = total_boxes[:,0]+total_boxes[:,5]*regw
-        qq2 = total_boxes[:,1]+total_boxes[:,6]*regh
-        qq3 = total_boxes[:,2]+total_boxes[:,7]*regw
-        qq4 = total_boxes[:,3]+total_boxes[:,8]*regh
+        regw = total_boxes[:, 2]-total_boxes[:,0]
+        regh = total_boxes[:, 3]-total_boxes[:,1]
+        qq1 = total_boxes[:, 0]+total_boxes[:,5]*regw
+        qq2 = total_boxes[:, 1]+total_boxes[:,6]*regh
+        qq3 = total_boxes[:, 2]+total_boxes[:,7]*regw
+        qq4 = total_boxes[:, 3]+total_boxes[:,8]*regh
         total_boxes = np.transpose(np.vstack([qq1, qq2, qq3, qq4, total_boxes[:,4]]))
         total_boxes = rerec(total_boxes.copy())
         total_boxes[:,0:4] = np.fix(total_boxes[:,0:4]).astype(np.int32)
@@ -361,12 +363,12 @@ def detect_face(img, minsize, pnet, rnet, onet, threshold, factor):
     numbox = total_boxes.shape[0]
     if numbox>0:
         # second stage
-        tempimg = np.zeros((24,24,3,numbox))
-        for k in range(0,numbox):
-            tmp = np.zeros((int(tmph[k]),int(tmpw[k]),3))
-            tmp[dy[k]-1:edy[k],dx[k]-1:edx[k],:] = img[y[k]-1:ey[k],x[k]-1:ex[k],:]
-            if tmp.shape[0]>0 and tmp.shape[1]>0 or tmp.shape[0]==0 and tmp.shape[1]==0:
-                tempimg[:,:,:,k] = imresample(tmp, (24, 24))
+        tempimg = np.zeros((24, 24, 3, numbox))
+        for k in range(0, numbox):
+            tmp = np.zeros((int(tmph[k]), int(tmpw[k]), 3))
+            tmp[dy[k]-1:edy[k], dx[k]-1:edx[k],:] = img[y[k]-1:ey[k], x[k]-1:ex[k], :]
+            if tmp.shape[0] > 0 and tmp.shape[1]>0 or tmp.shape[0] == 0 and tmp.shape[1] == 0:
+                tempimg[:, :, :, k] = imresample(tmp, (24, 24))
             else:
                 return np.empty()
         tempimg = (tempimg-127.5)*0.0078125
